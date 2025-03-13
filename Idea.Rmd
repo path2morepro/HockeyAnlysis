@@ -1,0 +1,18 @@
+---
+title: "Lab6"
+author: "Cui Qingxuan"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+---
+
+# Intuition
+球员的进攻手段分析+可视化方案， 此外我感觉这是一种变相的特征工程：如果我们将防守数据也做出来，就相当于是通过先验知识来获取一个队伍中的进攻和防守倾向和策略来预测对局胜利的几率。
+后面可以选一些比较垃圾的分类模型，然后做一些消融实验来证明我们特征工程的有效性。
+
+
+
+
+
