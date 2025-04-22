@@ -73,6 +73,9 @@ agg_df['entry_success_rate'] = agg_df['entry_success'] / agg_df['num_entries'].r
 agg_df['exit_success_rate'] = agg_df['exit_success'] / agg_df['num_exits'].replace(0, np.nan)
 agg_df['dump_success_rate'] = agg_df['dump_success'] / agg_df['num_dumps'].replace(0, np.nan)
 
+# 在这里添加了保存现存数据的代码cqx
+agg_df.to_csv('basicProcess.csv', index=False, encoding='utf-8')
+
 # 6. 选择用于建模的特征
 features = [
     'xG_total', 'actual_goals', 'num_shots', 'num_passes', 'num_carries', 'num_dumps',
@@ -85,8 +88,7 @@ features = [
 # 7. 特征标准化（均值为0，方差为1）
 X = StandardScaler().fit_transform(agg_df[features])
 
-# 在这里添加了保存现存数据的代码cqx
-pd.to_csv()
+
 
 '''-------------------------------------
 下面这段代码有个非常不好的地方就是他已经把这个几种风格确定好了

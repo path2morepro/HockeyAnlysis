@@ -1,0 +1,37 @@
+进攻主要分为：  进球，传球，控球
+防守分为：     组织进球和夺取球权
+
+进球：
+Goals
+Shots on Goal
+Scoring Chances
+High-Danger Scoring Chances 球门附近或者slot射门尝试
+Power Play Efficiency 多打少成功率
+
+控球：
+Time On Attack 进攻控球时间
+Zone Entries 进入进攻区次数
+Zone Exits 过半场
+Crosi
+Fenwick
+
+传球：
+Pass Completion Percentage传球成功率，可能需要加上位置信息才有意义
+Key Passes ​直接创造得分机会的传球
+Assists 进球前传导次数
+Shot Assists 直接助攻
+
+防守：
+阻止进球：
+Goals Against 失球数
+Goals Against Average 失球率
+Shots Against 被射门次数
+Block Shots 成功封堵
+Penalty Kill Efficiency 少打多中防守成功比率
+
+夺取球权：
+Takeaways: 前场和后场抢断应该不一样的
+控球区防守成功率：​球队在防守区成功阻止对手进入或维持控球的能力
+Corsi Against
+Fenwich Aginst
+Giveaways: 没防守丢球
