@@ -14,7 +14,7 @@ from math import pi
 os.environ["LOKY_MAX_CPU_COUNT"] = "4"
 
 # 1. Load and prepare dataset
-df = pd.read_csv("Linhac24-25_Sportlogiq.csv")
+df = pd.read_csv("data/Linhac24-25_Sportlogiq.csv")
 df = df.sort_values(by=['gameid', 'compiledgametime'])
 
 # ========== 2. Event flags with renamed variables ==========
