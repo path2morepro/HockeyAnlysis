@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from math import pi
 import seaborn as sns
 import pandas as pd
+from matplotlib.patches import Circle, Rectangle
+from matplotlib.lines import Line2D
+
 
 # 定义冰球场地上的关键位置
 def position():
@@ -145,3 +148,119 @@ def analysis(agg_df, features):
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
     plt.tight_layout()
     plt.show()
+
+
+'''
+给出参数：gameid, teamid, agg_df, possession_changes
+返回gameid, teamid, stype(from agg_df),  xadjcoord, yadjcoord (the last 2 from possession changes)
+要求按照gameid, teamid在agg_df中找到style，将该行(gameid, teamid, style)再根据possession_changes中的2个id返回x,y
+用x,y画出热力图，并标注gameid, teamid, style和x=0, x=25, x=-25三条线
+''' 
+# call case
+# visualize_possession_changes(69989, 726, agg_df, possession_changes)
+# visualize_possession_changes(80975, 503, agg_df, possession_changes)
+def visualize_possession_changes(gameid, teamid, agg_df, possession_changes):
+    rink = position()
+
+    # Get team style
+    team_style = agg_df[(agg_df['gameid'] == gameid) & (agg_df['teamid'] == teamid)]
+    style = team_style['style'].iloc[0] if 'style' in team_style.columns and not team_style.empty else "Unknown style"
+
+    # Filter possession changes
+    team_possession_changes = possession_changes[(possession_changes['gameid'] == gameid) & (possession_changes['teamid'] == teamid)]
+    if team_possession_changes.empty:
+        print(f"No possession changes found for team {teamid} in game {gameid}")
+        return
+
+    x_coords = team_possession_changes['xadjcoord'].values
+    y_coords = team_possession_changes['yadjcoord'].values
+
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Rink outline
+    ax.plot([-100, 100, 100, -100, -100], [-42.5, -42.5, 42.5, 42.5, -42.5], 'k-', linewidth=2)
+
+    # Center and blue lines
+    ax.axvline(x=0, color='r', linestyle='-', linewidth=1.5)
+    ax.axvline(x=rink["blue_line_x"], color='b', linestyle='-', linewidth=1.5)
+    ax.axvline(x=-rink["blue_line_x"], color='b', linestyle='-', linewidth=1.5)
+
+    # Center faceoff circle
+    center_circle = Circle((0, 0), rink["faceoff_radius"], fill=False, color='b', linewidth=1)
+    ax.add_patch(center_circle)
+
+    # Faceoff spots and circles
+    for name, spot in rink["faceoff_spots"].items():
+        circle = Circle(spot, rink["faceoff_radius"], fill=False, color='b', linestyle='--', linewidth=1)
+        dot = Circle(spot, 0.8, color='blue')
+        ax.add_patch(circle)
+        ax.add_patch(dot)
+
+    # Goal areas
+    for x in [-rink["goal_line_x"], rink["goal_line_x"]]:
+        ax.plot([x, x], [-rink["goal_width"] / 2, rink["goal_width"] / 2], 'k-', linewidth=3)
+        goal_box = Rectangle((x, -3), 1, 6, color='gray', alpha=0.3)
+        ax.add_patch(goal_box)
+
+    # Heatmap
+    if len(x_coords) > 5:
+        sns.kdeplot(x=x_coords, y=y_coords, cmap="YlOrRd", fill=True, bw_adjust=0.7, ax=ax)
+    else:
+        ax.scatter(x_coords, y_coords, c='red', alpha=0.7, s=50)
+
+    # Points
+    ax.scatter(x_coords, y_coords, c='black', alpha=0.3, s=10)
+
+    # Labels and decorations
+    ax.set_title(f"Possession Changes - Game {gameid}, Team {teamid}, Style: {style}")
+    ax.set_xlabel("X Coordinate (ft)")
+    ax.set_ylabel("Y Coordinate (ft)")
+    ax.legend(handles=[
+        Line2D([0], [0], color='r', lw=1.5, label='Center Line (x=0)'),
+        Line2D([0], [0], color='b', lw=1.5, label='Blue Lines (x=±25)'),
+    ])
+    ax.set_xlim(-105, 105)
+    ax.set_ylim(-45, 45)
+    ax.grid(True, linestyle='--', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+# 返回所有球权交换事件的df['eventname']和df['type']
+# 球权交换事件定义df['teaminpossession'][i] != df['teaminpossession'][i+1] 
+def possession_change_events(df):
+    df = df.dropna(subset=['teaminpossession'])
+    """
+    返回所有球权交换事件的数据+teamid的比赛风格+坐标信息
+    参数:
+        df: 原始数据 DataFrame，必须包含 'teaminpossession', 'eventname', 和 'type' 列
+    
+    返回:
+        possession_changes: 包含所有球权交换事件的 DataFrame
+    """
+    # # 确保数据按时间顺序排序
+    # if 'compiledgametime' in df.columns:
+    #     df = df.sort_values(by=['gameid', 'compiledgametime']).reset_index(drop=True)
+    
+    # 找出球权交换的位置
+    # 比较当前行和下一行的teaminpossession
+    possession_changes = df[:-1][df['teaminpossession'][:-1].values != df['teaminpossession'][1:].values]
+    possession_changes = possession_changes[possession_changes['eventname'] != 'faceoff']
+    # 也可以包含下一行的信息（即导致球权交换的事件）
+    next_events = df[1:][df['teaminpossession'][:-1].values != df['teaminpossession'][1:].values].reset_index(drop=True)
+    
+    # 将球权交换事件和导致球权交换的下一个事件合并
+    possession_changes = possession_changes.reset_index(drop=True)
+    # possession_changes['next_eventname'] = next_events['eventname']
+    # possession_changes['next_type'] = next_events['type'] if 'type' in next_events.columns else None
+    possession_changes['next_teaminpossession'] = next_events['teaminpossession']
+    
+    # 选择需要的列
+    result_columns = ['gameid', 'teamid', 'compiledgametime',
+                      'teaminpossession', 'eventname', 'type', 
+                      'next_teaminpossession', 'xadjcoord', 'yadjcoord']
+    
+    # # 确保所有列都存在
+    # result_columns = [col for col in result_columns if col in possession_changes.columns]
+    
+    return possession_changes[result_columns]
