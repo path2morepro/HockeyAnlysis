@@ -2,13 +2,11 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from math import pi
+
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "4"
 
@@ -72,18 +70,15 @@ features_v2 = [
     'avg_carry_duration', 'avg_carry_distance'
 ]
 X = StandardScaler().fit_transform(agg_df[features_v2])
-print(X[:10])
 
 # 8. Clustering
 kmeans = KMeans(n_clusters=3, random_state=42)
 agg_df['cluster'] = kmeans.fit_predict(X)
 style_names = {0: 'Puck Control Play', 1: 'Defensive Counterattack', 2: 'High-Pressure Offense'}
 agg_df['style'] = agg_df['cluster'].map(style_names)
-print(agg_df.head())
 
 # 9. Radar chart with clipped normalization
 style_features = agg_df.groupby('style')[features_v2].mean()
-print(style_features.head())
 style_features_norm = (style_features - style_features.min()) / (style_features.max() - style_features.min())
 style_features_norm = style_features_norm.clip(lower=0.05)
 
@@ -104,29 +99,10 @@ plt.xticks(angles[:-1], labels, fontsize=8)
 plt.title("Team Style Feature Radar Chart (Clipped Normalized)", size=14)
 plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
 plt.tight_layout()
+plt.savefig("figure1.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-# # 10. XGBoost to explain clusters
-X_model = agg_df[features_v2]
-y_model = agg_df['cluster']
-X_train, X_test, y_train, y_test = train_test_split(X_model, y_model, test_size=0.2, random_state=42)
 
-xgb_model = XGBClassifier(use_label_encoder=False, eval_metric='mlogloss')
-xgb_model.fit(X_train, y_train)
-y_pred = xgb_model.predict(X_test)
-print("\n🎯 XGBoost Classification Report for Cluster Prediction:")
-print(classification_report(y_test, y_pred))
-
-# Feature importance plot
-plt.figure(figsize=(10, 6))
-importance = xgb_model.feature_importances_
-sorted_idx = np.argsort(importance)
-plt.barh(range(len(importance)), importance[sorted_idx], align='center')
-plt.yticks(range(len(importance)), [features_v2[i] for i in sorted_idx])
-plt.xlabel("Feature Importance")
-plt.title("XGBoost Feature Importance for Team Style Clusters")
-plt.tight_layout()
-plt.show()
 
 # 11. Pairwise style win rate matrix
 df_matches = agg_df[['gameid', 'teamid', 'style', 'result']].copy()
@@ -162,15 +138,10 @@ plt.title("Win Rate by Team Style vs Opponent Style")
 plt.xlabel("Opponent Style")
 plt.ylabel("Team Style")
 plt.tight_layout()
+plt.savefig("figure4.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-# Print stacked outcome bar chart
-outcome_counts = results_df.groupby(['style_team', 'outcome']).size().unstack().fillna(0)
-percentages = outcome_counts[['win', 'draw', 'loss']].div(outcome_counts.sum(axis=1), axis=0)
-percentages.plot(kind='bar', stacked=True, colormap='Set2', figsize=(8, 6))
-plt.title("Outcome Breakdown per Team Style (Percentage)")
-plt.xlabel("Team Style")
-plt.ylabel("Percentage")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+
+
+
+
